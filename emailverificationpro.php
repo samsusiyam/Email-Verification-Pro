@@ -34,14 +34,14 @@ function emailverificationpro_config()
 
 function emailverificationpro_activate()
 {
-    Capsule::schema()->create('mod_emailverificationpro_settings', function ($table) {
+    \Capsule::schema()->create('mod_emailverificationpro_settings', function ($table) {
         $table->increments('id');
         $table->string('setting_key', 100)->unique();
         $table->text('setting_value')->nullable();
         $table->timestamps();
     });
 
-    Capsule::schema()->create('mod_emailverificationpro_verification', function ($table) {
+    \Capsule::schema()->create('mod_emailverificationpro_verification', function ($table) {
         $table->increments('id');
         $table->integer('client_id')->unsigned();
         $table->string('email', 255);
@@ -58,7 +58,7 @@ function emailverificationpro_activate()
         $table->index('is_verified');
     });
 
-    Capsule::schema()->create('mod_emailverificationpro_bans', function ($table) {
+    \Capsule::schema()->create('mod_emailverificationpro_bans', function ($table) {
         $table->increments('id');
         $table->string('ban_type', 20);
         $table->string('ban_value', 255);
@@ -72,7 +72,7 @@ function emailverificationpro_activate()
         $table->index('ban_value');
     });
 
-    Capsule::schema()->create('mod_emailverificationpro_activity_logs', function ($table) {
+    \Capsule::schema()->create('mod_emailverificationpro_activity_logs', function ($table) {
         $table->increments('id');
         $table->integer('client_id')->unsigned()->nullable();
         $table->string('action', 50);
@@ -108,7 +108,7 @@ function emailverificationpro_activate()
     );
 
     foreach ($defaultSettings as $key => $value) {
-        Capsule::table('mod_emailverificationpro_settings')->insert(array(
+        \Capsule::table('mod_emailverificationpro_settings')->insert(array(
             'setting_key'   => $key,
             'setting_value' => $value,
         ));
@@ -122,10 +122,10 @@ function emailverificationpro_activate()
 
 function emailverificationpro_deactivate()
 {
-    Capsule::schema()->dropIfExists('mod_emailverificationpro_settings');
-    Capsule::schema()->dropIfExists('mod_emailverificationpro_verification');
-    Capsule::schema()->dropIfExists('mod_emailverificationpro_bans');
-    Capsule::schema()->dropIfExists('mod_emailverificationpro_activity_logs');
+    \Capsule::schema()->dropIfExists('mod_emailverificationpro_settings');
+    \Capsule::schema()->dropIfExists('mod_emailverificationpro_verification');
+    \Capsule::schema()->dropIfExists('mod_emailverificationpro_bans');
+    \Capsule::schema()->dropIfExists('mod_emailverificationpro_activity_logs');
 
     return array(
         'status'  => 'success',
