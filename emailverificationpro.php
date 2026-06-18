@@ -4,8 +4,15 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-if (!class_exists('Capsule')) {
-    require_once dirname(__DIR__, 3) . '/init.php';
+if (!class_exists('Capsule') && !class_exists('WHMCS\\Database\\Capsule')) {
+    @require_once dirname(__DIR__, 3) . '/init.php';
+}
+if (!class_exists('Capsule') && !class_exists('WHMCS\\Database\\Capsule')) {
+    @require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
+}
+
+if (!class_exists('Capsule') && class_exists('WHMCS\\Database\\Capsule')) {
+    class_alias('WHMCS\\Database\\Capsule', 'Capsule');
 }
 
 require_once __DIR__ . '/lib/Core/Database.php';
