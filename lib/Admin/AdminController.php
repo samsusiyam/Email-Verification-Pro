@@ -295,7 +295,7 @@ class AdminController
 
     private function getUrl($cmd = null)
     {
-        $base = 'addons.php?module=emailverificationpro';
+        $base = 'addonmodules.php?mod=emailverificationpro';
         if ($cmd) {
             $base .= '&cmd=' . $cmd;
         }
