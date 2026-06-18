@@ -146,8 +146,15 @@ function emailverificationpro_upgrade($versions)
 
 function emailverificationpro_output($vars)
 {
-    $controller = new EmailVerificationPro\Admin\AdminController($vars);
-    echo $controller->handle();
+    try {
+        $controller = new EmailVerificationPro\Admin\AdminController($vars);
+        $output = $controller->handle();
+        if ($output) {
+            echo $output;
+        }
+    } catch (\Throwable $e) {
+        echo '<div style="padding:20px;color:red;"><b>Error:</b> ' . htmlspecialchars($e->getMessage()) . ' in ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</div>';
+    }
 }
 
 function emailverificationpro_clientarea()
