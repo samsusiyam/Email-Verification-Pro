@@ -290,7 +290,10 @@ class AdminController
 
     private function getUrl($cmd = null)
     {
-        $base = 'addonmodules.php?mod=emailverificationpro';
+        $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
+            . '://' . $_SERVER['HTTP_HOST']
+            . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
+        $base = $baseUrl . '/addonmodules.php?mod=emailverificationpro';
         if ($cmd) {
             $base .= '&cmd=' . $cmd;
         }
