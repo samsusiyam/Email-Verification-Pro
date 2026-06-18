@@ -45,7 +45,7 @@ class ClientController
         $email = '';
 
         if ($clientId) {
-            $client = \Capsule::table('clients')->find($clientId);
+            $client = \Capsule::table('tblclients')->find($clientId);
             if ($client) {
                 $email = $client->email;
             }
@@ -96,7 +96,7 @@ class ClientController
             exit;
         }
 
-        $client = \Capsule::table('clients')->find($clientId);
+        $client = \Capsule::table('tblclients')->find($clientId);
         if (!$client) {
             header('Location: index.php?m=emailverificationpro&msg=' . urlencode('Client not found.') . '&msg_type=danger');
             exit;
@@ -131,7 +131,7 @@ class ClientController
         if ($result['success']) {
             $_SESSION['evp_verified'] = 1;
             unset($_SESSION['evp_on_verify_page']);
-            \Capsule::table('clients')
+            \Capsule::table('tblclients')
                 ->where('id', $result['client_id'])
                 ->update(['verified' => 1]);
 

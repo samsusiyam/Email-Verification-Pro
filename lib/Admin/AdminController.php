@@ -82,7 +82,7 @@ class AdminController
     private function dashboardPage()
     {
         $unverified = Verification::getUnverifiedCount();
-        $totalClients = \Capsule::table('clients')->count();
+        $totalClients = \Capsule::table('tblclients')->count();
         $totalVerified = \Capsule::table('mod_emailverificationpro_verification')->where('is_verified', 1)->count();
         $totalBans = \Capsule::table('mod_emailverificationpro_bans')->count();
         $recentLogs = ActivityLog::getAll(1, 10);

@@ -182,7 +182,7 @@ function emailverificationpro_hook_daily_cron_job($vars)
             ->get();
 
         foreach ($expired as $record) {
-            \Capsule::table('clients')->where('id', $record->client_id)->update(['status' => 'Closed']);
+            \Capsule::table('tblclients')->where('id', $record->client_id)->update(['status' => 'Closed']);
             ActivityLog::add($record->client_id, 'auto_terminated', "Account auto-terminated due to unverified email after {$autoTerminateDays} days.");
         }
     }
@@ -201,7 +201,7 @@ function emailverificationpro_hook_daily_cron_job($vars)
                 ->exists();
 
             if (!$hasOrder) {
-                \Capsule::table('clients')->where('id', $record->client_id)->delete();
+                \Capsule::table('tblclients')->where('id', $record->client_id)->delete();
                 \Capsule::table('mod_emailverificationpro_verification')->where('id', $record->id)->delete();
                 ActivityLog::add($record->client_id, 'auto_deleted', "Unverified account with no orders auto-deleted after {$autoDeleteDays} days.");
             }

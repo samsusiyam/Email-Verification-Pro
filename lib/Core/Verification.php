@@ -63,7 +63,7 @@ class Verification
                 'updated_at'  => date('Y-m-d H:i:s'),
             ]);
 
-        \Capsule::table('clients')
+        \Capsule::table('tblclients')
             ->where('id', $record->client_id)
             ->update(['verified' => 1]);
 
@@ -181,7 +181,7 @@ class Verification
     public static function getAll($page = 1, $perPage = 25, $search = '', $filter = 'all')
     {
         $query = \Capsule::table('mod_emailverificationpro_verification as v')
-            ->leftJoin('clients as c', 'c.id', '=', 'v.client_id')
+            ->leftJoin('tblclients as c', 'c.id', '=', 'v.client_id')
             ->select('v.*', 'c.firstname', 'c.lastname', 'c.companyname');
 
         if ($search) {
@@ -223,7 +223,7 @@ class Verification
                 'updated_at'  => date('Y-m-d H:i:s'),
             ]);
 
-        \Capsule::table('clients')
+        \Capsule::table('tblclients')
             ->where('id', $record->client_id)
             ->update(['verified' => 1]);
 
