@@ -31,7 +31,7 @@ class ActivityLog
     public static function getAll($page = 1, $perPage = 50, $search = '', $action = '', $clientId = null)
     {
         $query = \Capsule::table('mod_emailverificationpro_activity_logs as l')
-            ->leftJoin('clients as c', 'c.id', '=', 'l.client_id')
+            ->leftJoin('tblclients as c', 'c.id', '=', 'l.client_id')
             ->select('l.*', 'c.firstname', 'c.lastname', 'c.email as client_email');
 
         if ($search) {

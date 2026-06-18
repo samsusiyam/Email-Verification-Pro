@@ -31,15 +31,7 @@ function emailverificationpro_config()
         'version'         => '7.0.3',
         'author'          => 'MD Samsuzzaman Siyam',
         'language'        => 'english',
-        'fields'          => array(
-            'license_key' => array(
-                'FriendlyName' => 'License Key',
-                'Type'         => 'text',
-                'Size'         => '40',
-                'Default'      => '',
-                'Description'  => 'Enter your license key',
-            ),
-        ),
+        'fields'          => array(),
     );
 }
 

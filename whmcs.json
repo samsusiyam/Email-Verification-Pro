@@ -8,12 +8,5 @@
     "description": "Email verification addon module for WHMCS with Checkout and All Pages modes, auto-terminate, banning, reCAPTCHA/Turnstile support.",
     "version": "7.0.3",
     "minWhmcsVersion": "8.12",
-    "fields": {
-        "license_key": {
-            "FriendlyName": "License Key",
-            "Type": "text",
-            "Size": "40",
-            "Description": "Enter your license key"
-        }
-    }
+    "fields": {}
 }
