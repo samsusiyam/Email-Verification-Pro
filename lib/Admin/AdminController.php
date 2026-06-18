@@ -31,20 +31,15 @@ class AdminController
 
         switch ($cmd) {
             case 'settings':
-                $this->settingsPage();
-                break;
+                return $this->settingsPage();
             case 'bans':
-                $this->bansPage();
-                break;
+                return $this->bansPage();
             case 'clients':
-                $this->clientsPage();
-                break;
+                return $this->clientsPage();
             case 'logs':
-                $this->logsPage();
-                break;
+                return $this->logsPage();
             default:
-                $this->dashboardPage();
-                break;
+                return $this->dashboardPage();
         }
     }
 
@@ -104,7 +99,7 @@ class AdminController
         $smarty->assign('settings', $settings);
         $smarty->assign('module_url', $this->getUrl());
 
-        $smarty->display('dashboard.tpl');
+        return $smarty->fetch('dashboard.tpl');
     }
 
     private function settingsPage()
@@ -122,7 +117,7 @@ class AdminController
         $smarty->assign('module_url', $this->getUrl());
         $smarty->assign('saved', $_GET['saved'] ?? 0);
 
-        $smarty->display('settings.tpl');
+        return $smarty->fetch('settings.tpl');
     }
 
     private function saveSettings()
@@ -174,7 +169,7 @@ class AdminController
         $smarty->assign('type', $type);
         $smarty->assign('module_url', $this->getUrl());
 
-        $smarty->display('bans.tpl');
+        return $smarty->fetch('bans.tpl');
     }
 
     private function banIp()
@@ -243,7 +238,7 @@ class AdminController
         $smarty->assign('filter', $filter);
         $smarty->assign('module_url', $this->getUrl());
 
-        $smarty->display('clients.tpl');
+        return $smarty->fetch('clients.tpl');
     }
 
     private function manualVerify()
@@ -290,7 +285,7 @@ class AdminController
         $smarty->assign('action_filter', $action);
         $smarty->assign('module_url', $this->getUrl());
 
-        $smarty->display('logs.tpl');
+        return $smarty->fetch('logs.tpl');
     }
 
     private function getUrl($cmd = null)

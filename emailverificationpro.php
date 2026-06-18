@@ -147,7 +147,7 @@ function emailverificationpro_upgrade($versions)
 function emailverificationpro_output($vars)
 {
     $controller = new EmailVerificationPro\Admin\AdminController($vars);
-    $controller->handle();
+    echo $controller->handle();
 }
 
 function emailverificationpro_clientarea()
