@@ -23,7 +23,7 @@ class AdminController
     public function handle()
     {
         $action = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
-        $cmd = $_GET['cmd'] ?? $_POST['cmd'] ?? 'dashboard';
+        $cmd = $_GET['action'] ?? $_POST['action'] ?? 'dashboard';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handlePost($action);
@@ -288,14 +288,11 @@ class AdminController
         return $smarty->fetch('logs.tpl');
     }
 
-    private function getUrl($cmd = null)
+    private function getUrl($action = null)
     {
-        $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
-            . '://' . $_SERVER['HTTP_HOST']
-            . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
-        $base = $baseUrl . '/addonmodules.php?mod=emailverificationpro';
-        if ($cmd) {
-            $base .= '&cmd=' . $cmd;
+        $base = 'addonmodules.php?module=emailverificationpro';
+        if ($action) {
+            $base .= '&action=' . $action;
         }
         return $base;
     }

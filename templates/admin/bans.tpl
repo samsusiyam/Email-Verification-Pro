@@ -111,7 +111,7 @@
         {if $total_pages > 1}
         <div class="evp-pagination">
             {for $p=1 to $total_pages}
-                <a href="{$module_url}&cmd=bans&page={$p}&search={$search}&type={$type}" {if $p == $page}class="active"{/if}>{$p}</a>
+                <a href="{$module_url}&action=bans&page={$p}&search={$search}&type={$type}" {if $p == $page}class="active"{/if}>{$p}</a>
             {/for}
         </div>
         {/if}

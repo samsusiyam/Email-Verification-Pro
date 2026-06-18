@@ -44,10 +44,10 @@
 
     <div class="evp-section">
         <h2>Quick Actions</h2>
-        <a href="{$module_url}&cmd=settings" class="evp-btn" style="background:#3498db;color:#fff;margin-right:10px;">Settings</a>
-        <a href="{$module_url}&cmd=clients" class="evp-btn" style="background:#27ae60;color:#fff;margin-right:10px;">Client Management</a>
-        <a href="{$module_url}&cmd=bans" class="evp-btn" style="background:#f39c12;color:#fff;margin-right:10px;">Ban Management</a>
-        <a href="{$module_url}&cmd=logs" class="evp-btn" style="background:#95a5a6;color:#fff;">Activity Logs</a>
+        <a href="{$module_url}&action=settings" class="evp-btn" style="background:#3498db;color:#fff;margin-right:10px;">Settings</a>
+        <a href="{$module_url}&action=clients" class="evp-btn" style="background:#27ae60;color:#fff;margin-right:10px;">Client Management</a>
+        <a href="{$module_url}&action=bans" class="evp-btn" style="background:#f39c12;color:#fff;margin-right:10px;">Ban Management</a>
+        <a href="{$module_url}&action=logs" class="evp-btn" style="background:#95a5a6;color:#fff;">Activity Logs</a>
     </div>
 
     <div class="evp-section">
