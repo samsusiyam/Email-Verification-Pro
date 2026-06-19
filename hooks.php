@@ -1,15 +1,17 @@
 <?php
 
 if (!defined("WHMCS")) {
-    die("This file cannot be accessed directly");
+    die("Access to this file is not possible");
 }
 
-require_once dirname(__FILE__) . '/lib/Core/Database.php';
-require_once dirname(__FILE__) . '/lib/Core/Verification.php';
-require_once dirname(__FILE__) . '/lib/Core/BanManager.php';
-require_once dirname(__FILE__) . '/lib/Core/ActivityLog.php';
-require_once dirname(__FILE__) . '/lib/Core/Language.php';
-require_once dirname(__FILE__) . '/lib/Client/ClientController.php';
+use WHMCS\Database\Capsule;
+
+require_once __DIR__ . '/lib/Core/Database.php';
+require_once __DIR__ . '/lib/Core/Verification.php';
+require_once __DIR__ . '/lib/Core/BanManager.php';
+require_once __DIR__ . '/lib/Core/ActivityLog.php';
+require_once __DIR__ . '/lib/Core/Language.php';
+require_once __DIR__ . '/lib/Client/ClientController.php';
 
 use EmailVerificationPro\Core\Database;
 use EmailVerificationPro\Core\Verification;
@@ -17,8 +19,7 @@ use EmailVerificationPro\Core\BanManager;
 use EmailVerificationPro\Core\ActivityLog;
 use EmailVerificationPro\Client\ClientController;
 
-function emailverificationpro_hook_clientareapage($vars)
-{
+add_hook('ClientAreaPage', 1, function ($vars) {
     if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -31,6 +32,8 @@ function emailverificationpro_hook_clientareapage($vars)
     if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
         return;
     }
+
+    $currentPage = $vars['pagetitle'] ?? '';
 
     if (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro') {
         return;
@@ -52,7 +55,8 @@ function emailverificationpro_hook_clientareapage($vars)
     $mode = $settings['verification_mode'] ?? 'checkout';
 
     if ($mode === 'allpages') {
-        return ClientController::renderVerificationPage($clientId);
+        header('Location: index.php?m=emailverificationpro');
+        exit;
     }
 
     if ($mode === 'checkout') {
@@ -65,13 +69,13 @@ function emailverificationpro_hook_clientareapage($vars)
         }
 
         if ($isCheckout) {
-            return ClientController::renderVerificationPage($clientId);
+            header('Location: index.php?m=emailverificationpro');
+            exit;
         }
     }
-}
+});
 
-function emailverificationpro_hook_clientarearegister($vars)
-{
+add_hook('ClientAreaRegister', 1, function ($vars) {
     if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -82,8 +86,6 @@ function emailverificationpro_hook_clientarearegister($vars)
     if (!$clientId || !$email) {
         return;
     }
-
-    $settings = Database::settingAll();
 
     $isBannedIp = BanManager::isIpBanned(ActivityLog::getClientIp());
     if ($isBannedIp) {
@@ -109,21 +111,43 @@ function emailverificationpro_hook_clientarearegister($vars)
     ActivityLog::add($clientId, 'verification_sent', "Verification email sent to {$email}.");
 
     $_SESSION['evp_verified'] = 0;
-}
+});
 
-function emailverificationpro_hook_dailycronjob($vars)
-{
+add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
+    $settings = Database::settingAll();
+    $mode = $settings['verification_mode'] ?? 'checkout';
+
+    if ($mode !== 'checkout') {
+        return;
+    }
+
+    if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $clientId = $_SESSION['client_id'] ?? 0;
+    if (!$clientId) {
+        return;
+    }
+
+    $isVerified = ClientController::isClientVerified($clientId);
+    if (!$isVerified) {
+        return array('Please verify your email address before completing checkout.');
+    }
+});
+
+add_hook('DailyCronJob', 1, function ($vars) {
     $settings = Database::settingAll();
 
     $autoTerminateDays = (int)($settings['auto_terminate_days'] ?? 0);
     if ($autoTerminateDays > 0) {
-        $expired = \Capsule::table('mod_emailverificationpro_verification')
+        $expired = Capsule::table('mod_emailverificationpro_verification')
             ->where('is_verified', 0)
             ->where('expires_at', '<', date('Y-m-d H:i:s'))
             ->get();
 
         foreach ($expired as $record) {
-            \Capsule::table('tblclients')->where('id', $record->client_id)->update(['status' => 'Closed']);
+            Capsule::table('tblclients')->where('id', $record->client_id)->update(['status' => 'Closed']);
             ActivityLog::add($record->client_id, 'auto_terminated', "Account auto-terminated due to unverified email after {$autoTerminateDays} days.");
         }
     }
@@ -131,19 +155,19 @@ function emailverificationpro_hook_dailycronjob($vars)
     $autoDeleteDays = (int)($settings['auto_delete_days'] ?? 0);
     if ($autoDeleteDays > 0) {
         $deleteDate = date('Y-m-d H:i:s', strtotime("-{$autoDeleteDays} days"));
-        $unverifiedOld = \Capsule::table('mod_emailverificationpro_verification')
+        $unverifiedOld = Capsule::table('mod_emailverificationpro_verification')
             ->where('is_verified', 0)
             ->where('created_at', '<', $deleteDate)
             ->get();
 
         foreach ($unverifiedOld as $record) {
-            $hasOrder = \Capsule::table('tblorders')
+            $hasOrder = Capsule::table('tblorders')
                 ->where('userid', $record->client_id)
                 ->exists();
 
             if (!$hasOrder) {
-                \Capsule::table('tblclients')->where('id', $record->client_id)->delete();
-                \Capsule::table('mod_emailverificationpro_verification')->where('id', $record->id)->delete();
+                Capsule::table('tblclients')->where('id', $record->client_id)->delete();
+                Capsule::table('mod_emailverificationpro_verification')->where('id', $record->id)->delete();
                 ActivityLog::add($record->client_id, 'auto_deleted', "Unverified account with no orders auto-deleted after {$autoDeleteDays} days.");
             }
         }
@@ -152,7 +176,7 @@ function emailverificationpro_hook_dailycronjob($vars)
     $autoResendDays = (int)($settings['auto_resend_days'] ?? 0);
     if ($autoResendDays > 0) {
         $resendDate = date('Y-m-d H:i:s', strtotime("-{$autoResendDays} days"));
-        $needResend = \Capsule::table('mod_emailverificationpro_verification')
+        $needResend = Capsule::table('mod_emailverificationpro_verification')
             ->where('is_verified', 0)
             ->where(function ($q) use ($resendDate) {
                 $q->where('last_resend_at', '<', $resendDate)
@@ -173,4 +197,4 @@ function emailverificationpro_hook_dailycronjob($vars)
     }
 
     BanManager::cleanExpired();
-}
+});
