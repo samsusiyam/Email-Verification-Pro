@@ -24,16 +24,15 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         session_start();
     }
 
-    $clientId = $_SESSION['client_id'] ?? 0;
+    $client = Menu::context('client');
+    if (is_null($client) || !$client) {
+        return;
+    }
+
+    $clientId = $client->id ?? 0;
     if (!$clientId) {
         return;
     }
-
-    if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
-        return;
-    }
-
-    $currentPage = $vars['pagetitle'] ?? '';
 
     if (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro') {
         return;
@@ -45,18 +44,15 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         return;
     }
 
-    $isVerified = ClientController::isClientVerified($clientId);
-    if ($isVerified) {
-        $_SESSION['evp_verified'] = 1;
-        return;
-    }
-
     $settings = Database::settingAll();
     $mode = $settings['verification_mode'] ?? 'checkout';
 
     if ($mode === 'allpages') {
-        header('Location: index.php?m=emailverificationpro');
-        exit;
+        $isVerified = ClientController::isClientVerified($clientId);
+        if (!$isVerified) {
+            header('Location: index.php?m=emailverificationpro');
+            exit;
+        }
     }
 
     if ($mode === 'checkout') {
@@ -69,8 +65,11 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         }
 
         if ($isCheckout) {
-            header('Location: index.php?m=emailverificationpro');
-            exit;
+            $isVerified = ClientController::isClientVerified($clientId);
+            if (!$isVerified) {
+                header('Location: index.php?m=emailverificationpro');
+                exit;
+            }
         }
     }
 });
@@ -110,7 +109,9 @@ add_hook('ClientAreaRegister', 1, function ($vars) {
 
     ActivityLog::add($clientId, 'verification_sent', "Verification email sent to {$email}.");
 
-    $_SESSION['evp_verified'] = 0;
+    if (isset($_SESSION['evp_verified'])) {
+        $_SESSION['evp_verified'] = 0;
+    }
 });
 
 add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
@@ -121,11 +122,12 @@ add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
         return;
     }
 
-    if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
-        session_start();
+    $client = Menu::context('client');
+    if (is_null($client) || !$client) {
+        return;
     }
 
-    $clientId = $_SESSION['client_id'] ?? 0;
+    $clientId = $client->id ?? 0;
     if (!$clientId) {
         return;
     }
@@ -133,6 +135,46 @@ add_hook('ShoppingCartValidateCheckout', 1, function ($vars) {
     $isVerified = ClientController::isClientVerified($clientId);
     if (!$isVerified) {
         return array('Please verify your email address before completing checkout.');
+    }
+});
+
+add_hook('PreRegistrarRegisterDomain', 1, function ($vars) {
+    $settings = Database::settingAll();
+    $mode = $settings['verification_mode'] ?? 'checkout';
+
+    $client = Menu::context('client');
+    if (is_null($client) || !$client) {
+        return;
+    }
+
+    $clientId = $client->id ?? 0;
+    if (!$clientId) {
+        return;
+    }
+
+    $isVerified = ClientController::isClientVerified($clientId);
+    if (!$isVerified) {
+        return array('abortWithError' => 'Please verify your email address before registering a domain.');
+    }
+});
+
+add_hook('PreModuleCreate', 1, function ($vars) {
+    $settings = Database::settingAll();
+    $mode = $settings['verification_mode'] ?? 'checkout';
+
+    $client = Menu::context('client');
+    if (is_null($client) || !$client) {
+        return;
+    }
+
+    $clientId = $client->id ?? 0;
+    if (!$clientId) {
+        return;
+    }
+
+    $isVerified = ClientController::isClientVerified($clientId);
+    if (!$isVerified) {
+        return array('abortcmd' => true);
     }
 });
 
