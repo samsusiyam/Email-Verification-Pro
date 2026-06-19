@@ -41,7 +41,7 @@ class ClientController
     {
         Language::load();
 
-        $clientId = $_SESSION['clients'] ?? 0;
+        $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
         $email = '';
 
         if ($clientId) {
@@ -90,7 +90,7 @@ class ClientController
     {
         Language::load();
 
-        $clientId = $_SESSION['clients'] ?? 0;
+        $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
         if (!$clientId) {
             header('Location: index.php?m=emailverificationpro&msg=' . urlencode('Please log in first.') . '&msg_type=danger');
             exit;

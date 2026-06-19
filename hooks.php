@@ -49,7 +49,7 @@ function emailverificationpro_hook_client_area($vars)
         }
     }
 
-    $clientId = $_SESSION['clients'] ?? 0;
+    $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
 
     if (!$clientId) {
         return;
@@ -127,7 +127,7 @@ function emailverificationpro_hook_client_area_page($vars)
         session_start();
     }
 
-    $clientId = $_SESSION['clients'] ?? 0;
+    $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
     if (!$clientId) {
         return;
     }
