@@ -20,8 +20,9 @@ use EmailVerificationPro\Core\ActivityLog;
 use EmailVerificationPro\Client\ClientController;
 
 add_hook('ClientAreaPage', 1, function ($vars) {
-    if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
-        session_start();
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($requestUri, 'm=emailverificationpro') !== false) {
+        return;
     }
 
     $client = Menu::context('client');
@@ -34,9 +35,6 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         return;
     }
 
-    if (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro') {
-        return;
-    }
     if (isset($_GET['evp_token'])) {
         return;
     }
@@ -60,7 +58,7 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         if (isset($_GET['cart']) || isset($_GET['checkout']) || (isset($_GET['a']) && $_GET['a'] === 'checkout')) {
             $isCheckout = true;
         }
-        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'cart.php') !== false) {
+        if (strpos($requestUri, 'cart.php') !== false) {
             $isCheckout = true;
         }
 
