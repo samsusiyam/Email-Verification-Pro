@@ -157,6 +157,11 @@ function emailverificationpro_output($vars)
     }
 }
 
+function emailverificationpro_init()
+{
+    require_once __DIR__ . '/hooks.php';
+}
+
 function emailverificationpro_clientarea()
 {
     $controller = new EmailVerificationPro\Client\ClientController();
