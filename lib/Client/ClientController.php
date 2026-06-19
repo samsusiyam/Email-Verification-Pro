@@ -146,13 +146,17 @@ class ClientController
     public static function isClientVerified($clientId)
     {
         if (!$clientId) {
+            file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', date('Y-m-d H:i:s') . " isClientVerified: no clientId, returning true\n", FILE_APPEND);
             return true;
         }
 
         if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
+            file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', date('Y-m-d H:i:s') . " isClientVerified: session evp_verified=1 for client {$clientId}, returning true\n", FILE_APPEND);
             return true;
         }
 
-        return Verification::isVerified($clientId);
+        $dbResult = Verification::isVerified($clientId);
+        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', date('Y-m-d H:i:s') . " isClientVerified: db check for client {$clientId} = " . ($dbResult ? 'true' : 'false') . "\n", FILE_APPEND);
+        return $dbResult;
     }
 }

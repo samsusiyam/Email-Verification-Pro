@@ -23,6 +23,13 @@ function emailverificationpro_hook_client_area($vars)
         session_start();
     }
 
+    $debug = [];
+    $debug['time'] = date('Y-m-d H:i:s');
+    $debug['url'] = $_SERVER['REQUEST_URI'] ?? 'unknown';
+    $debug['session_keys'] = array_keys($_SESSION);
+    $debug['client_id_raw'] = $_SESSION['client_id'] ?? 'NOT_SET';
+    $debug['clients_raw'] = $_SESSION['clients'] ?? 'NOT_SET';
+
     $isVerifyPage = false;
 
     if (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro') {
@@ -50,26 +57,38 @@ function emailverificationpro_hook_client_area($vars)
     }
 
     $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
+    $debug['client_id_final'] = $clientId;
 
     if (!$clientId) {
+        $debug['reason'] = 'NO_CLIENT_ID';
+        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
         return;
     }
 
     $settings = Database::settingAll();
     $mode = $settings['verification_mode'] ?? 'checkout';
+    $debug['mode'] = $mode;
 
     $isVerified = ClientController::isClientVerified($clientId);
+    $debug['is_verified'] = $isVerified;
+    $debug['evp_session_verified'] = $_SESSION['evp_verified'] ?? 'NOT_SET';
 
     if ($isVerified) {
         $_SESSION['evp_verified'] = 1;
+        $debug['reason'] = 'ALREADY_VERIFIED';
+        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
         return;
     }
 
     if ($isVerifyPage) {
+        $debug['reason'] = 'ON_VERIFY_PAGE';
+        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
         return;
     }
 
     if ($mode === 'allpages') {
+        $debug['reason'] = 'REDIRECT_TO_VERIFY';
+        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
         $redirectUrl = 'index.php?m=emailverificationpro';
         header("Location: " . $redirectUrl);
         exit;
