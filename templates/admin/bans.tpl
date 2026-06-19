@@ -52,9 +52,8 @@
 
     <div class="evp-section">
         <h2>Ban List ({$total} records)</h2>
-        <form method="get" class="evp-form-inline">
-            <input type="hidden" name="module" value="emailverificationpro">
-            <input type="hidden" name="cmd" value="bans">
+        <form method="get" action="{$module_url}" class="evp-form-inline">
+            <input type="hidden" name="action" value="bans">
             <input type="text" name="search" placeholder="Search ban value..." value="{$search}">
             <select name="type">
                 <option value="all" {if $type == 'all'}selected{/if}>All Types</option>

@@ -64,6 +64,9 @@ class AdminController
             case 'manual_verify':
                 $this->manualVerify();
                 break;
+            case 'manual_unverify':
+                $this->manualUnverify();
+                break;
             case 'delete_verification':
                 $this->deleteVerification();
                 break;
@@ -246,6 +249,16 @@ class AdminController
         $id = (int)($_POST['verify_id'] ?? 0);
         if ($id) {
             Verification::markVerified($id);
+        }
+        header('Location: ' . $this->getUrl('clients'));
+        exit;
+    }
+
+    private function manualUnverify()
+    {
+        $id = (int)($_POST['unverify_id'] ?? 0);
+        if ($id) {
+            Verification::markUnverified($id);
         }
         header('Location: ' . $this->getUrl('clients'));
         exit;

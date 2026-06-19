@@ -123,7 +123,7 @@ class BanManager
     public static function getAll($page = 1, $perPage = 25, $search = '', $type = 'all')
     {
         $query = \Capsule::table('mod_emailverificationpro_bans as b')
-            ->leftJoin('admins as a', 'a.id', '=', 'b.admin_id')
+            ->leftJoin('tbladmins as a', 'a.id', '=', 'b.admin_id')
             ->select('b.*', 'a.username as admin_username');
 
         if ($search) {

@@ -24,9 +24,8 @@
 
     <div class="evp-section">
         <h2>Verification Records ({$total} total)</h2>
-        <form method="get" class="evp-form-inline">
-            <input type="hidden" name="module" value="emailverificationpro">
-            <input type="hidden" name="cmd" value="clients">
+        <form method="get" action="{$module_url}" class="evp-form-inline">
+            <input type="hidden" name="action" value="clients">
             <input type="text" name="search" placeholder="Search email/name/token..." value="{$search}">
             <select name="filter">
                 <option value="all" {if $filter == 'all'}selected{/if}>All</option>
@@ -75,6 +74,11 @@
                         <form method="post" action="{$module_url}&action=manual_verify" style="display:inline;">
                             <input type="hidden" name="verify_id" value="{$v->id}">
                             <button type="submit" class="evp-btn evp-btn-success" onclick="return confirm('Manually verify this email?')">Verify</button>
+                        </form>
+                        {else}
+                        <form method="post" action="{$module_url}&action=manual_unverify" style="display:inline;">
+                            <input type="hidden" name="unverify_id" value="{$v->id}">
+                            <button type="submit" class="evp-btn evp-btn-danger" onclick="return confirm('Manually unverify this email?')">Unverify</button>
                         </form>
                         {/if}
                         <form method="post" action="{$module_url}&action=delete_verification" style="display:inline;">

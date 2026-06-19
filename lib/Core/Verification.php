@@ -232,6 +232,30 @@ class Verification
         return true;
     }
 
+    public static function markUnverified($id)
+    {
+        $record = \Capsule::table('mod_emailverificationpro_verification')->find($id);
+        if (!$record) {
+            return false;
+        }
+
+        \Capsule::table('mod_emailverificationpro_verification')
+            ->where('id', $id)
+            ->update([
+                'is_verified' => 0,
+                'verified_at' => null,
+                'updated_at'  => date('Y-m-d H:i:s'),
+            ]);
+
+        \Capsule::table('tblclients')
+            ->where('id', $record->client_id)
+            ->update(['verified' => 0]);
+
+        ActivityLog::add($record->client_id, 'admin_unverified', "Email {$record->email} manually unverified by admin.");
+
+        return true;
+    }
+
     public static function delete($id)
     {
         $record = \Capsule::table('mod_emailverificationpro_verification')->find($id);
