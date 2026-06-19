@@ -20,8 +20,22 @@ use EmailVerificationPro\Core\ActivityLog;
 use EmailVerificationPro\Client\ClientController;
 
 add_hook('ClientAreaPage', 1, function ($vars) {
-    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-    if (strpos($requestUri, 'm=emailverificationpro') !== false) {
+    if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+
+    if (!empty($_SESSION['evp_redirecting'])) {
+        unset($_SESSION['evp_redirecting']);
+        return;
+    }
+
+    if (isset($_REQUEST['m']) && $_REQUEST['m'] === 'emailverificationpro') {
+        return;
+    }
+    if (isset($_GET['evp_token'])) {
+        return;
+    }
+    if (isset($_GET['evp_action'])) {
         return;
     }
 
@@ -35,10 +49,7 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         return;
     }
 
-    if (isset($_GET['evp_token'])) {
-        return;
-    }
-    if (isset($_GET['evp_action'])) {
+    if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
         return;
     }
 
@@ -48,6 +59,7 @@ add_hook('ClientAreaPage', 1, function ($vars) {
     if ($mode === 'allpages') {
         $isVerified = ClientController::isClientVerified($clientId);
         if (!$isVerified) {
+            $_SESSION['evp_redirecting'] = 1;
             header('Location: index.php?m=emailverificationpro');
             exit;
         }
@@ -58,13 +70,14 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         if (isset($_GET['cart']) || isset($_GET['checkout']) || (isset($_GET['a']) && $_GET['a'] === 'checkout')) {
             $isCheckout = true;
         }
-        if (strpos($requestUri, 'cart.php') !== false) {
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'cart.php') !== false) {
             $isCheckout = true;
         }
 
         if ($isCheckout) {
             $isVerified = ClientController::isClientVerified($clientId);
             if (!$isVerified) {
+                $_SESSION['evp_redirecting'] = 1;
                 header('Location: index.php?m=emailverificationpro');
                 exit;
             }
