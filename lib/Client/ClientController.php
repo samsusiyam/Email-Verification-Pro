@@ -71,8 +71,9 @@ class ClientController
         $enableTurnstile = Database::setting('enable_turnstile', '0');
         $turnstileSiteKey = Database::setting('turnstile_site_key', '');
 
-        $templateDir = dirname(__FILE__, 2) . '/templates/client';
-        $compileDir = defined('WHMCS_BASE_PATH') ? WHMCS_BASE_PATH . '/templates_c' : dirname(__FILE__, 5) . '/templates_c';
+        $moduleRoot = dirname(__DIR__, 2);
+        $templateDir = $moduleRoot . '/templates/client';
+        $compileDir = defined('WHMCS_BASE_PATH') ? WHMCS_BASE_PATH . '/templates_c' : dirname($moduleRoot, 3) . '/templates_c';
 
         $smarty = new \Smarty();
         $smarty->setTemplateDir($templateDir);
