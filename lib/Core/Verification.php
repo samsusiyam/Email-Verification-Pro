@@ -6,6 +6,10 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
+if (!class_exists('Capsule') && class_exists('WHMCS\\Database\\Capsule')) {
+    class_alias('WHMCS\\Database\\Capsule', 'Capsule');
+}
+
 class Verification
 {
     public static function generateToken($length = 64)
