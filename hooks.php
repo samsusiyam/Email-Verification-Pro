@@ -4,12 +4,12 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-require_once __DIR__ . '/lib/Core/Database.php';
-require_once __DIR__ . '/lib/Core/Verification.php';
-require_once __DIR__ . '/lib/Core/BanManager.php';
-require_once __DIR__ . '/lib/Core/ActivityLog.php';
-require_once __DIR__ . '/lib/Core/Language.php';
-require_once __DIR__ . '/lib/Client/ClientController.php';
+require_once dirname(__FILE__) . '/lib/Core/Database.php';
+require_once dirname(__FILE__) . '/lib/Core/Verification.php';
+require_once dirname(__FILE__) . '/lib/Core/BanManager.php';
+require_once dirname(__FILE__) . '/lib/Core/ActivityLog.php';
+require_once dirname(__FILE__) . '/lib/Core/Language.php';
+require_once dirname(__FILE__) . '/lib/Client/ClientController.php';
 
 use EmailVerificationPro\Core\Database;
 use EmailVerificationPro\Core\Verification;
@@ -17,81 +17,42 @@ use EmailVerificationPro\Core\BanManager;
 use EmailVerificationPro\Core\ActivityLog;
 use EmailVerificationPro\Client\ClientController;
 
-function emailverificationpro_hook_client_area($vars)
+function emailverificationpro_hook_clientareapage($vars)
 {
     if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
-    $debug = [];
-    $debug['time'] = date('Y-m-d H:i:s');
-    $debug['url'] = $_SERVER['REQUEST_URI'] ?? 'unknown';
-    $debug['session_keys'] = array_keys($_SESSION);
-    $debug['client_id_raw'] = $_SESSION['client_id'] ?? 'NOT_SET';
-    $debug['clients_raw'] = $_SESSION['clients'] ?? 'NOT_SET';
+    $clientId = $_SESSION['client_id'] ?? 0;
+    if (!$clientId) {
+        return;
+    }
 
-    $isVerifyPage = false;
+    if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
+        return;
+    }
 
     if (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro') {
-        $isVerifyPage = true;
-        $_SESSION['evp_on_verify_page'] = 1;
+        return;
     }
-
     if (isset($_GET['evp_token'])) {
-        $isVerifyPage = true;
-        $_SESSION['evp_on_verify_page'] = 1;
+        return;
     }
-
     if (isset($_GET['evp_action'])) {
-        $isVerifyPage = true;
-        $_SESSION['evp_on_verify_page'] = 1;
+        return;
     }
 
-    if (isset($_SESSION['evp_on_verify_page']) && $_SESSION['evp_on_verify_page'] == 1) {
-        if (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro') {
-            $isVerifyPage = true;
-        }
-        if (!isset($_GET['m']) && !isset($_GET['evp_token']) && !isset($_GET['evp_action'])) {
-            $_SESSION['evp_on_verify_page'] = 0;
-        }
-    }
-
-    $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
-    $debug['client_id_final'] = $clientId;
-
-    if (!$clientId) {
-        $debug['reason'] = 'NO_CLIENT_ID';
-        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
+    $isVerified = ClientController::isClientVerified($clientId);
+    if ($isVerified) {
+        $_SESSION['evp_verified'] = 1;
         return;
     }
 
     $settings = Database::settingAll();
     $mode = $settings['verification_mode'] ?? 'checkout';
-    $debug['mode'] = $mode;
-
-    $isVerified = ClientController::isClientVerified($clientId);
-    $debug['is_verified'] = $isVerified;
-    $debug['evp_session_verified'] = $_SESSION['evp_verified'] ?? 'NOT_SET';
-
-    if ($isVerified) {
-        $_SESSION['evp_verified'] = 1;
-        $debug['reason'] = 'ALREADY_VERIFIED';
-        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
-        return;
-    }
-
-    if ($isVerifyPage) {
-        $debug['reason'] = 'ON_VERIFY_PAGE';
-        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
-        return;
-    }
 
     if ($mode === 'allpages') {
-        $debug['reason'] = 'REDIRECT_TO_VERIFY';
-        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', json_encode($debug) . "\n", FILE_APPEND);
-        $redirectUrl = 'index.php?m=emailverificationpro';
-        header("Location: " . $redirectUrl);
-        exit;
+        return ClientController::renderVerificationPage($clientId);
     }
 
     if ($mode === 'checkout') {
@@ -99,17 +60,22 @@ function emailverificationpro_hook_client_area($vars)
         if (isset($_GET['cart']) || isset($_GET['checkout']) || (isset($_GET['a']) && $_GET['a'] === 'checkout')) {
             $isCheckout = true;
         }
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'cart.php') !== false) {
+            $isCheckout = true;
+        }
 
         if ($isCheckout) {
-            $redirectUrl = 'index.php?m=emailverificationpro';
-            header("Location: " . $redirectUrl);
-            exit;
+            return ClientController::renderVerificationPage($clientId);
         }
     }
 }
 
-function emailverificationpro_hook_client_register($vars)
+function emailverificationpro_hook_clientarearegister($vars)
 {
+    if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
     $clientId = $vars['userid'] ?? 0;
     $email = $vars['email'] ?? '';
 
@@ -117,18 +83,23 @@ function emailverificationpro_hook_client_register($vars)
         return;
     }
 
+    $settings = Database::settingAll();
+
     $isBannedIp = BanManager::isIpBanned(ActivityLog::getClientIp());
     if ($isBannedIp) {
+        ActivityLog::add($clientId, 'register_blocked', "Registration blocked: IP is banned.");
         return;
     }
 
     $isBannedEmail = BanManager::isEmailBanned($email);
     if ($isBannedEmail) {
+        ActivityLog::add($clientId, 'register_blocked', "Registration blocked: email {$email} is banned.");
         return;
     }
 
     $isBannedProvider = BanManager::isEmailDomainBanned($email);
     if ($isBannedProvider) {
+        ActivityLog::add($clientId, 'register_blocked', "Registration blocked: email provider is banned.");
         return;
     }
 
@@ -140,56 +111,7 @@ function emailverificationpro_hook_client_register($vars)
     $_SESSION['evp_verified'] = 0;
 }
 
-function emailverificationpro_hook_client_area_page($vars)
-{
-    if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-
-    $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
-    if (!$clientId) {
-        return;
-    }
-
-    $settings = Database::settingAll();
-
-    if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
-        return;
-    }
-
-    $isVerified = ClientController::isClientVerified($clientId);
-    if ($isVerified) {
-        $_SESSION['evp_verified'] = 1;
-        return;
-    }
-
-    $isVerifyPage = (isset($_GET['m']) && $_GET['m'] === 'emailverificationpro')
-        || (isset($_SESSION['evp_on_verify_page']) && $_SESSION['evp_on_verify_page'] == 1)
-        || isset($_GET['evp_token'])
-        || isset($_GET['evp_action']);
-
-    if ($isVerifyPage) {
-        return;
-    }
-
-    $mode = $settings['verification_mode'] ?? 'checkout';
-    if ($mode !== 'allpages') {
-        return;
-    }
-
-    $blockedMsg = $settings['blocked_pages_message'] ?? 'Please verify your email address to access this page.';
-    $verifyUrl = 'index.php?m=emailverificationpro';
-
-    echo '<div id="evp-block-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;">
-        <div style="background:#fff;padding:40px;border-radius:8px;text-align:center;max-width:500px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
-            <h2 style="color:#e74c3c;margin-bottom:15px;">Email Verification Required</h2>
-            <p style="color:#333;margin-bottom:20px;">' . htmlspecialchars($blockedMsg) . '</p>
-            <a href="' . $verifyUrl . '" style="display:inline-block;padding:12px 30px;background:#3498db;color:#fff;text-decoration:none;border-radius:5px;font-size:16px;">Verify Email Now</a>
-        </div>
-    </div>';
-}
-
-function emailverificationpro_hook_daily_cron_job($vars)
+function emailverificationpro_hook_dailycronjob($vars)
 {
     $settings = Database::settingAll();
 

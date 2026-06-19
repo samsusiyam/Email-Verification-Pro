@@ -24,24 +24,25 @@ class ClientController
 
         if ($token) {
             $this->doVerify($token);
-            return;
+            return '';
         }
 
         $action = $_GET['evp_action'] ?? 'page';
 
         if ($action === 'resend') {
             $this->doResend();
-            return;
+            return '';
         }
 
-        $this->verifyPage();
+        return $this->renderVerificationPage(
+            $_SESSION['client_id'] ?? 0
+        );
     }
 
-    private function verifyPage()
+    public static function renderVerificationPage($clientId)
     {
         Language::load();
 
-        $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
         $email = '';
 
         if ($clientId) {
@@ -66,7 +67,7 @@ class ClientController
         $enableTurnstile = Database::setting('enable_turnstile', '0');
         $turnstileSiteKey = Database::setting('turnstile_site_key', '');
 
-        $templateDir = __DIR__ . '/../../templates/client';
+        $templateDir = dirname(__FILE__, 2) . '/templates/client';
         $compileDir = defined('WHMCS_BASE_PATH') ? WHMCS_BASE_PATH . '/templates_c' : dirname(__FILE__, 5) . '/templates_c';
 
         $smarty = new \Smarty();
@@ -82,15 +83,14 @@ class ClientController
         $smarty->assign('enable_turnstile', $enableTurnstile);
         $smarty->assign('turnstile_site_key', $turnstileSiteKey);
 
-        $output = $smarty->fetch('verify.tpl');
-        return $output;
+        return $smarty->fetch('verify.tpl');
     }
 
     private function doResend()
     {
         Language::load();
 
-        $clientId = $_SESSION['client_id'] ?? $_SESSION['clients'] ?? 0;
+        $clientId = $_SESSION['client_id'] ?? 0;
         if (!$clientId) {
             header('Location: index.php?m=emailverificationpro&msg=' . urlencode('Please log in first.') . '&msg_type=danger');
             exit;
@@ -146,17 +146,13 @@ class ClientController
     public static function isClientVerified($clientId)
     {
         if (!$clientId) {
-            file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', date('Y-m-d H:i:s') . " isClientVerified: no clientId, returning true\n", FILE_APPEND);
             return true;
         }
 
         if (isset($_SESSION['evp_verified']) && $_SESSION['evp_verified'] == 1) {
-            file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', date('Y-m-d H:i:s') . " isClientVerified: session evp_verified=1 for client {$clientId}, returning true\n", FILE_APPEND);
             return true;
         }
 
-        $dbResult = Verification::isVerified($clientId);
-        file_put_contents(dirname(__DIR__, 3) . '/evp_debug.log', date('Y-m-d H:i:s') . " isClientVerified: db check for client {$clientId} = " . ($dbResult ? 'true' : 'false') . "\n", FILE_APPEND);
-        return $dbResult;
+        return Verification::isVerified($clientId);
     }
 }

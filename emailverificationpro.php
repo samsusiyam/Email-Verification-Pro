@@ -157,9 +157,13 @@ function emailverificationpro_output($vars)
     }
 }
 
-function emailverificationpro_init()
+function emailverificationpro_init($vars = [])
 {
     require_once __DIR__ . '/hooks.php';
+
+    add_hook('ClientAreaPage', 1, 'emailverificationpro_hook_clientareapage');
+    add_hook('ClientAreaRegister', 1, 'emailverificationpro_hook_clientarearegister');
+    add_hook('DailyCronJob', 1, 'emailverificationpro_hook_dailycronjob');
 }
 
 function emailverificationpro_clientarea()
